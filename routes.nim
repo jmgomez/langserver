@@ -19,7 +19,8 @@ import
   json_serialization,
   std/[strscans, times, json, parseutils, strutils],
   ls,
-  stew/[byteutils]
+  stew/[byteutils],
+  ./nimexpand
 
 proc getNphPath(): Option[string] =
   let path = findExe "nph"
@@ -402,8 +403,12 @@ proc hover*(
       if suggest.symkind == "skMacro":
         let expanded = await nimsuggest.get
           .expand(uriToPath(uri), ls.uriToStash(uri), suggest.line, suggest.column)
-        if expanded.len > 0:
+        if expanded.len > 0 and expanded[0].doc != "":
           content.add MarkedStringOption %* {"language": "nim", "value": expanded[0].doc}
+        else:          
+          # debug "Couldnt expand the macro. Trying with nim expand", suggest = suggest[]
+          let expanded = await nimExpandMacro("nim", suggest, uriToPath(uri))
+          content.add MarkedStringOption %* {"language": "nim", "value": expanded}
       return some(Hover(
         contents: some(%content),
         range: some(toLabelRange(suggest.toUtf16Pos(ls))),
