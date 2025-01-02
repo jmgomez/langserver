@@ -11,7 +11,6 @@ import std/[strscans, strformat]
 
 proc extractMacroExpansion*(output: string, targetLine: int): string =
   var start = false
-  # Split on both \n and \r\n
   for line in output.split({'\n', '\r'}):
     if line.len == 0: continue
     debug "extractMacroExpansion", line = line, condMet = &".nim({targetLine}," in line
@@ -22,7 +21,6 @@ proc extractMacroExpansion*(output: string, targetLine: int): string =
     if start:
       result.add line & "\n"
     
-  # Clean up the result
   if result.len > 0:
     let macroStart = result.find("macro: ")
     if macroStart != -1:
@@ -45,5 +43,4 @@ proc nimExpandMacro*(nimPath: string, suggest: Suggest, filePath: string): Futur
   
   let res = await process.waitForExit(InfiniteDuration)
   let output = string.fromBytes(process.stderrStream.read().await)  
-  # Extract just the expanded macro code for our specific line
   extractMacroExpansion(output, line)

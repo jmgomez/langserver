@@ -407,8 +407,11 @@ proc hover*(
           content.add MarkedStringOption %* {"language": "nim", "value": expanded[0].doc}
         else:          
           # debug "Couldnt expand the macro. Trying with nim expand", suggest = suggest[]
-          let expanded = await nimExpandMacro("nim", suggest, uriToPath(uri))
-          content.add MarkedStringOption %* {"language": "nim", "value": expanded}
+          let config = await ls.getWorkspaceConfiguration()
+          let nimPath = config.getNimPath()
+          if nimPath.isSome:  
+            let expanded = await nimExpandMacro(nimPath.get, suggest, uriToPath(uri))
+            content.add MarkedStringOption %* {"language": "nim", "value": expanded}
       return some(Hover(
         contents: some(%content),
         range: some(toLabelRange(suggest.toUtf16Pos(ls))),
